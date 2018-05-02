@@ -3,25 +3,25 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "networkInterfaceName": {
-      "value": "Contoso-Nic-BE"
+      "value": "ILB-Nic-BE"
     },
     "loadBalancerName": {
-      "value": "contosoILB"
+      "value": "ILB-LoadBalancer"
     },
     "vmName": {
-      "value": "BackendVM"
+      "value": "ILB-BackendVM"
     },
     "virtualNetworkName": {
-      "value": "ContosoVnet"
+      "value": "ILB-Vnet"
     },
     "storageAccountName": {
-      "value": "GEN-UNIQUE"
+      "value": "ilbstorageaccount"
     },
     "adminUsername": {
       "value" : "admin123"
     },
     "adminPassword": {
-      "value" : "GEN-PASSWORD"
+      "value" : "HON123well"
     }
   }
 }
