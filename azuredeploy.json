@@ -17,7 +17,19 @@
     "loadBalancerName": {
       "type": "string",
       "metadata": {
-        "description": "This is the name of the load balancer"
+        "description": "This is the name of the internal load balancer"
+      }
+    },
+    "publicloadBalancerName": {
+      "type": "string",
+      "metadata": {
+        "description": "This is the name of the public load balancer"
+      }
+    },
+    "publicIPAddressName": {
+      "type": "string",
+      "metadata": {
+        "description": "This is the name of the public IP address"
       }
     },
     "adminUsername": {
@@ -94,7 +106,8 @@
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables ('subnetName'))]",
     "numberOfInstances": 2,
-    "lbID": "[resourceId('Microsoft.Network/loadBalancers',parameters('loadBalancerName'))]"
+    "lbID": "[resourceId('Microsoft.Network/loadBalancers',parameters('loadBalancerName'))]",    
+    "lb2ID": "[resourceId('Microsoft.Network/loadBalancers',parameters('publicloadBalancerName'))]"
   },
   "resources": [
     {
@@ -149,7 +162,8 @@
       },
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/loadBalancers/', parameters('loadBalancerName'))]"
+        "[concat('Microsoft.Network/loadBalancers/', parameters('loadBalancerName'))]",
+        "[concat('Microsoft.Network/loadBalancers/', parameters('publicloadBalancerName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -163,6 +177,9 @@
               "loadBalancerBackendAddressPools": [
                 {
                   "id": "[concat(variables('lbID'), '/backendAddressPools/BackendPool1')]"
+                },
+                {
+                  "id": "[concat(variables('lb2ID'), '/backendAddressPools/BackendPool1')]"
                 }
               ]
             }
@@ -171,9 +188,23 @@
       }
     },
     {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[parameters('publicIPAddressName')]",
       "apiVersion": "2015-05-01-preview",
+      "location": "[resourceGroup().location]",
+      "properties": {
+          "ipAddress": "104.42.46.252",
+          "publicIPAddressVersion": "IPv4",
+          "publicIPAllocationMethod": "Static",
+          "idleTimeoutInMinutes": 4,
+          "ipTags": []
+      },
+      "dependsOn": []
+    },
+    {
       "type": "Microsoft.Network/loadBalancers",
       "name": "[parameters('loadBalancerName')]",
+      "apiVersion": "2015-05-01-preview",
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[variables('vnetID')]"
@@ -225,6 +256,64 @@
               "numberOfProbes": 2
             },
             "name": "lbprobe"
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/loadBalancers",
+      "name": "[parameters('publicloadBalancerName')]",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddressName'))]"
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddressName'))]"
+              }
+            },
+            "name": "LoadBalancerFrontend"
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "BackendPool1"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('publicloadBalancerName')), '/frontendIpConfigurations/LoadBalancerFrontend')]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('publicloadBalancerName')), '/backendAddressPools/BackendPool1')]"
+              },
+              "probe": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('publicloadBalancerName')), '/probes/HealthProbe1')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 80,
+              "backendPort": 80,
+              "idleTimeoutInMinutes": 4
+            },
+            "Name": "ILB-LBRule1"
+          }
+        ],
+        "probes": [
+          {
+            "properties": {
+              "protocol": "Tcp",
+              "port": 80,
+              "intervalInSeconds": 15,
+              "numberOfProbes": 2
+            },
+            "name": "HealthProbe1"
           }
         ]
       }

@@ -8,6 +8,12 @@
     "loadBalancerName": {
       "value": "ILB-LoadBalancer"
     },
+    "publicloadBalancerName": {
+      "value": "ILB-LoadBalancer-2"
+    },
+    "publicIPAddressName": {
+      "value": "ILB-PublicIP"
+    },
     "vmName": {
       "value": "ILB-BackendVM"
     },
